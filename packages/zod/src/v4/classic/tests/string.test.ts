@@ -397,6 +397,13 @@ test("jwt token", () => {
   // type isn't JWT
   const d5 = makeJwt({ typ: "SUP", alg: "HS256" }, { foo: "bar" });
   expect(() => jwt.parse(d5)).toThrow();
+
+  // header whose base64url encoding contains - or _ (base64url chars not in standard base64 alphabet)
+  // kid: ">?" encodes to a segment ending in "Ij4_In0" — the _ triggers atob() to throw unless converted
+  const d6 = makeJwt({ alg: "HS256", kid: ">?" }, {});
+  const [headerPart6] = d6.split(".");
+  expect(headerPart6).toMatch(/[-_]/);
+  jwt.parse(d6);
 });
 
 test("url validations", () => {

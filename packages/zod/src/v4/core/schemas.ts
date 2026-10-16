@@ -1221,8 +1221,11 @@ export function isValidJWT(token: string, algorithm: util.JWTAlgorithm | null = 
     if (tokensParts.length !== 3) return false;
     const [header] = tokensParts;
     if (!header) return false;
+    // jwt headers are base64url-encoded; convert to standard base64 before atob()
+    const base64Header = header.replace(/[-_]/g, (c) => (c === "-" ? "+" : "/"));
+    const paddedHeader = base64Header.padEnd(Math.ceil(base64Header.length / 4) * 4, "=");
     // @ts-ignore
-    const parsedHeader = JSON.parse(atob(header));
+    const parsedHeader = JSON.parse(atob(paddedHeader));
     if ("typ" in parsedHeader && parsedHeader?.typ !== "JWT") return false;
     if (!parsedHeader.alg) return false;
     if (algorithm && (!("alg" in parsedHeader) || parsedHeader.alg !== algorithm)) return false;
